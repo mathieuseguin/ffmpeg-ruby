@@ -1,0 +1,93 @@
+# ffmpeg-ruby
+
+[project home on github](http://github.com/sevenwire/ffmpeg-ruby)
+
+## Changes
+This fork contains methods that are better suited for grabbing frames from a linear list of timestamps
+with minimal frame decoding.
+A bug was also fixed to ensure no endless decoding loops.
+A good example can be found in thumbs_example.rb
+
+## Summary
+
+ffmpeg-ruby is a ruby C extension binding to ffmpeg/libav* library.
+
+It's main purpose is to extract frame in order to make video thumbnails.
+It also give access to main video attributes (frame rate, bit rate, duration, codecs, ...)
+
+So, it doesn't support encoding (at least for now).
+
+## Installation
+
+Download latest sources of ffmpeg :
+  
+    wget http://ffmpeg.mplayerhq.hu/ffmpeg-export-snapshot.tar.bz2
+    tar xjvf ffmpeg-export-snapshot.tar.bz2
+    cd ffmpeg-export-20*
+
+Configure, optionally with some prefix :
+
+    ./configure --prefix=/opt/ffmpeg --enable-pthreads --enable-shared --enable-gpl
+    make
+    sudo make install
+
+You can now continue with ffmpeg-ruby.
+
+    git clone git://github.com/gwik/ffmpeg-ruby.git
+    
+    cd ffmpeg-ruby
+    gem build ./ffmpeg-ruby.gemspec
+    sudo gem install ./ffmpeg-ruby-0.1.0.gem -- --with-ffmpeg-dir=/opt/ffmpeg
+
+You can now test it :
+
+    irb
+    >> require 'rubygems'
+    => false
+    >> require 'ffmpeg'
+    => true
+    >> FFMPEG
+    => FFMPEG
+
+## Tutorial
+
+ffmpeg-ruby does not have real document YET (I promise it will change soom).
+You can take a look a specs for in depth usage.
+
+Here is basic usage.
+
+## Video attributes
+
+    require 'rubygems'
+    require 'ffmpeg'
+    
+    video = FFMPEG::InputFormat.new('alligator.mp4')
+    => #<FFMPEG::InputFormat:0x5fa3c0>
+    
+    video.public_methods - Object.public_instance_methods
+    => ["bit_rate", "filename", "duration", "has_stream_with_codec_type?", "first_video_stream", "human_duration", "has_video?", "video_stream_count", "streams", "has_audio?", "first_audio_stream", "audio_stream_count"]
+    
+## Streams
+
+    >> video.first_video_stream.public_methods - Object.public_instance_methods
+    => ["position", "duration", "index", "codec", "decode_frame", "seek"]
+
+### Seeking in stream
+
+    video.first_video_stream.seek(10)
+    video.first_video_stream.position
+    => 10.2333333333333
+
+As you can see, seeking is not very precise.
+
+### Extracting frame
+
+    frame = video.first_video_stream.decode_frame
+    => #<FFMPEG::Frame:0x5c9874>
+    
+    "frame size #{frame.width}x#{frame.height}"
+    => "frame size 240x176"
+
+### Animated GIF example with RMagick
+
+    See animated_gif_example.rb
